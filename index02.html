@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Português para Inglês - Correção</title>
+
+<style>
+body{
+  margin:0;
+  padding:15px;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(180deg,#000,#111);
+  color:white;
+}
+
+header{
+  text-align:center;
+  border:2px solid gold;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:20px;
+  background:#050505;
+}
+
+h1,h2{color:gold}
+
+.card{
+  background:#111;
+  border:1px solid gold;
+  border-radius:15px;
+  padding:15px;
+  margin-bottom:20px;
+}
+
+input, textarea, select{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:1px solid gold;
+  background:#000;
+  color:white;
+  font-size:16px;
+}
+
+button{
+  width:100%;
+  padding:13px;
+  margin-top:8px;
+  border:none;
+  border-radius:10px;
+  background:gold;
+  color:black;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th{
+  background:gold;
+  color:black;
+  padding:10px;
+}
+
+td{
+  border:1px solid #555;
+  padding:8px;
+  text-align:center;
+  vertical-align:top;
+}
+
+td[contenteditable="true"]{
+  background:#000;
+  color:white;
+}
+
+.acerto{
+  color:#00ff66;
+  font-weight:bold;
+}
+
+.erro{
+  color:#ff4444;
+  font-weight:bold;
+}
+
+.total{
+  text-align:center;
+  font-size:24px;
+  color:#00ff66;
+  font-weight:bold;
+  margin-top:15px;
+}
+
+@media print{
+  button{display:none}
+  body{background:white;color:black}
+  .card,header{border:1px solid black}
+  h1,h2{color:black}
+  td[contenteditable="true"]{
+    color:black;
+    background:white;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🇧🇷 ➜ 🇺🇸 Correção Português para Inglês</h1>
+  <p>Frase em português • Tentativa em inglês • Correção • Pontuação</p>
+</header>
+
+<div class="card">
+  <h2>➕ Adicionar Nova Frase</h2>
+
+  <label>🇧🇷 Frase em Português</label>
+  <textarea id="portugues" rows="2" placeholder="Ex: Eu estou pronto para o show"></textarea>
+
+  <label>🇺🇸 Minha tentativa em Inglês</label>
+  <textarea id="tentativa" rows="2" placeholder="Ex: I am ready for the show"></textarea>
+
+  <label>✅ Inglês Correto</label>
+  <textarea id="correcao" rows="2" placeholder="Ex: I am ready for the show"></textarea>
+
+  <label>🗣️ Pronúncia aproximada</label>
+  <input id="pronuncia" placeholder="Ex: Ai ém ré-di fór dê shôu">
+
+  <label>Status</label>
+  <select id="status">
+    <option value="acerto">✅ Acerto</option>
+    <option value="erro">❌ Erro</option>
+  </select>
+
+  <label>📌 Observação / Explicação</label>
+  <textarea id="obs" rows="2" placeholder="Ex: Use I am para dizer eu estou"></textarea>
+
+  <button onclick="adicionar()">Adicionar na Tabela</button>
+</div>
+
+<div class="card">
+  <h2>📊 Tabela Editável de Correção</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Português</th>
+        <th>Tentativa em Inglês</th>
+        <th>Inglês Correto</th>
+        <th>Pronúncia</th>
+        <th>Status</th>
+        <th>Observação</th>
+        <th>Pontos</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="tabela"></tbody>
+  </table>
+
+  <div class="total" id="pontuacao">Pontuação: 0</div>
+
+  <button onclick="window.print()">📄 Salvar / Imprimir PDF</button>
+  <button onclick="limparTudo()">🗑️ Limpar Tudo</button>
+</div>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("correcaoInglesEdy")) || [];
+
+function adicionar(){
+  let portugues = document.getElementById("portugues").value;
+  let tentativa = document.getElementById("tentativa").value;
+  let correcao = document.getElementById("correcao").value;
+  let pronuncia = document.getElementById("pronuncia").value;
+  let status = document.getElementById("status").value;
+  let obs = document.getElementById("obs").value;
+
+  if(portugues.trim() === ""){
+    alert("Digite a frase em português.");
+    return;
+  }
+
+  dados.push({
+    portugues,
+    tentativa,
+    correcao,
+    pronuncia,
+    status,
+    obs
+  });
+
+  salvar();
+  mostrar();
+
+  document.getElementById("portugues").value = "";
+  document.getElementById("tentativa").value = "";
+  document.getElementById("correcao").value = "";
+  document.getElementById("pronuncia").value = "";
+  document.getElementById("obs").value = "";
+}
+
+function mostrar(){
+  let tabela = document.getElementById("tabela");
+  tabela.innerHTML = "";
+
+  let total = 0;
+
+  dados.forEach((item,index)=>{
+    let pontos = item.status === "acerto" ? 10 : -5;
+    total += pontos;
+
+    tabela.innerHTML += `
+      <tr>
+        <td contenteditable="true" oninput="editar(${index}, 'portugues', this.innerText)">${item.portugues}</td>
+
+        <td contenteditable="true" oninput="editar(${index}, 'tentativa', this.innerText)">${item.tentativa}</td>
+
+        <td contenteditable="true" oninput="editar(${index}, 'correcao', this.innerText)">${item.correcao}</td>
+
+        <td contenteditable="true" oninput="editar(${index}, 'pronuncia', this.innerText)">${item.pronuncia}</td>
+
+        <td>
+          <select onchange="editar(${index}, 'status', this.value)">
+            <option value="acerto" ${item.status === "acerto" ? "selected" : ""}>✅ Acerto</option>
+            <option value="erro" ${item.status === "erro" ? "selected" : ""}>❌ Erro</option>
+          </select>
+        </td>
+
+        <td contenteditable="true" oninput="editar(${index}, 'obs', this.innerText)">${item.obs}</td>
+
+        <td class="${item.status}">
+          ${item.status === "acerto" ? "+10 ✅" : "-5 ❌"}
+        </td>
+
+        <td>
+          <button onclick="apagar(${index})">Apagar</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("pontuacao").innerText =
+    "Pontuação: " + total + " pontos";
+}
+
+function editar(index,campo,valor){
+  dados[index][campo] = valor;
+  salvar();
+  mostrar();
+}
+
+function apagar(index){
+  dados.splice(index,1);
+  salvar();
+  mostrar();
+}
+
+function salvar(){
+  localStorage.setItem("correcaoInglesEdy", JSON.stringify(dados));
+}
+
+function limparTudo(){
+  if(confirm("Deseja apagar todos os registros?")){
+    dados = [];
+    salvar();
+    mostrar();
+  }
+}
+
+mostrar();
+</script>
+
+</body>
+</html>
