@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Chegada em Tempo Real</title>
+
+<style>
+:root{
+  --gold:#d4af37;
+  --dark:#050505;
+  --card:#101010;
+  --green:#00ff66;
+  --red:#ff3b3b;
+  --yellow:#ffcc00;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:linear-gradient(180deg,#000,#111);
+  color:white;
+  padding:15px;
+}
+
+header,.card{
+  background:#080808;
+  border:2px solid var(--gold);
+  border-radius:18px;
+  padding:15px;
+  margin-bottom:15px;
+  box-shadow:0 0 18px rgba(212,175,55,.18);
+}
+
+h1,h2{
+  color:var(--gold);
+  text-align:center;
+}
+
+.relogio{
+  text-align:center;
+  font-size:2.2rem;
+  font-weight:bold;
+  color:var(--green);
+  border:1px solid var(--green);
+  border-radius:14px;
+  padding:14px;
+  margin-top:10px;
+  background:#000;
+}
+
+.dataAtual{
+  text-align:center;
+  color:#ddd;
+  margin-top:8px;
+  font-size:1rem;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:10px;
+  margin:6px 0 12px;
+  border-radius:8px;
+  border:none;
+  font-size:1rem;
+}
+
+textarea{
+  min-height:70px;
+}
+
+button{
+  background:var(--gold);
+  color:#000;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  font-weight:bold;
+  margin:5px 0;
+  width:100%;
+  cursor:pointer;
+  font-size:1rem;
+}
+
+button:hover{
+  filter:brightness(1.08);
+}
+
+.btnChegada{
+  background:var(--green);
+  font-size:1.1rem;
+}
+
+.btnSaida{
+  background:#7dd3fc;
+}
+
+.btnLimpar{
+  background:var(--red);
+  color:#fff;
+}
+
+.registro{
+  border:1px solid var(--gold);
+  border-radius:12px;
+  padding:12px;
+  margin:12px 0;
+  background:#151515;
+}
+
+.statusPresente{
+  color:var(--green);
+  font-weight:bold;
+}
+
+.statusAtrasado{
+  color:var(--yellow);
+  font-weight:bold;
+}
+
+.statusFalta{
+  color:var(--red);
+  font-weight:bold;
+}
+
+.resumo{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  text-align:center;
+}
+
+.boxResumo{
+  background:#000;
+  border:1px solid var(--gold);
+  border-radius:12px;
+  padding:12px;
+}
+
+.boxResumo strong{
+  display:block;
+  color:var(--gold);
+  font-size:1.5rem;
+}
+
+@media(max-width:700px){
+  .resumo{grid-template-columns:1fr;}
+  .relogio{font-size:1.8rem;}
+}
+
+@media print{
+  button,input,select,textarea,.noPrint{
+    display:none !important;
+  }
+  body{
+    background:white;
+    color:black;
+  }
+  header,.card,.registro,.boxResumo{
+    background:white;
+    color:black;
+    border:1px solid black;
+    box-shadow:none;
+  }
+  h1,h2{
+    color:black;
+  }
+  .relogio{
+    color:black;
+    border:1px solid black;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>⏱ Controle de Chegada em Tempo Real</h1>
+  <p>Programa para registrar automaticamente o horário de chegada da equipe, com histórico salvo no navegador e opção de imprimir/salvar em PDF.</p>
+  <div class="relogio" id="relogio">00:00:00</div>
+  <div class="dataAtual" id="dataAtual"></div>
+</header>
+
+<div class="card">
+<h2>📋 Dados da Chegada</h2>
+
+<label>Nome do Integrante</label>
+<input id="nome" placeholder="Ex: Abizael, Renan, Patrick, Alisson, Vinni">
+
+<label>Função</label>
+<select id="funcao">
+  <option>Dançarino</option>
+  <option>Assistente de palco / Figurino</option>
+  <option>Iluminação e som</option>
+  <option>Artista principal</option>
+  <option>Produtor</option>
+  <option>Outro</option>
+</select>
+
+<label>Horário oficial combinado</label>
+<input id="horaOficial" type="time" value="20:00">
+
+<label>Observação</label>
+<textarea id="observacao" placeholder="Ex: chegou pronto, chegou sem figurino, precisou ajustar algo..."></textarea>
+
+<button class="btnChegada" onclick="registrarChegada()">✅ Registrar Chegada Agora</button>
+<button class="btnSaida" onclick="registrarSaida()">🚪 Registrar Saída Agora</button>
+<button onclick="window.print()">📄 Salvar / Imprimir em PDF</button>
+<button class="btnLimpar" onclick="limparHistorico()">🗑 Limpar Histórico</button>
+</div>
+
+<div class="card">
+<h2>📊 Resumo do Dia</h2>
+<div class="resumo">
+  <div class="boxResumo">Presentes<strong id="totalPresentes">0</strong></div>
+  <div class="boxResumo">Atrasados<strong id="totalAtrasados">0</strong></div>
+  <div class="boxResumo">Registros<strong id="totalRegistros">0</strong></div>
+</div>
+</div>
+
+<div class="card">
+<h2>📜 Histórico de Chegadas</h2>
+<div id="historico"></div>
+</div>
+
+<script>
+function doisDigitos(n){
+  return String(n).padStart(2,"0");
+}
+
+function agoraCompleto(){
+  const agora = new Date();
+  const data = `${agora.getFullYear()}-${doisDigitos(agora.getMonth()+1)}-${doisDigitos(agora.getDate())}`;
+  const hora = `${doisDigitos(agora.getHours())}:${doisDigitos(agora.getMinutes())}:${doisDigitos(agora.getSeconds())}`;
+  const horaCurta = `${doisDigitos(agora.getHours())}:${doisDigitos(agora.getMinutes())}`;
+  return {agora,data,hora,horaCurta};
+}
+
+function atualizarRelogio(){
+  const {agora,hora} = agoraCompleto();
+  document.getElementById("relogio").textContent = hora;
+  document.getElementById("dataAtual").textContent = agora.toLocaleDateString("pt-BR",{
+    weekday:"long",
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+}
+
+setInterval(atualizarRelogio,1000);
+atualizarRelogio();
+
+function calcularStatus(horaChegada,horaOficial){
+  const [hC,mC] = horaChegada.split(":").map(Number);
+  const [hO,mO] = horaOficial.split(":").map(Number);
+
+  const chegadaMin = hC * 60 + mC;
+  const oficialMin = hO * 60 + mO;
+  const diferenca = chegadaMin - oficialMin;
+
+  if(diferenca <= 0){
+    return {status:"Presente no horário", classe:"statusPresente", minutos:0};
+  }
+
+  return {status:"Atrasado", classe:"statusAtrasado", minutos:diferenca};
+}
+
+function getRegistros(){
+  return JSON.parse(localStorage.getItem("historicoChegadaTempoReal") || "[]");
+}
+
+function setRegistros(registros){
+  localStorage.setItem("historicoChegadaTempoReal", JSON.stringify(registros));
+}
+
+function registrarChegada(){
+  const nome = document.getElementById("nome").value.trim();
+  const funcao = document.getElementById("funcao").value;
+  const horaOficial = document.getElementById("horaOficial").value;
+  const observacao = document.getElementById("observacao").value.trim() || "-";
+
+  if(!nome){
+    alert("Digite o nome do integrante antes de registrar a chegada.");
+    return;
+  }
+
+  const {data,hora,horaCurta} = agoraCompleto();
+  const resultado = calcularStatus(horaCurta,horaOficial);
+
+  const registro = {
+    id:Date.now(),
+    tipo:"chegada",
+    nome,
+    funcao,
+    data,
+    hora,
+    horaOficial,
+    status:resultado.status,
+    classe:resultado.classe,
+    minutosAtraso:resultado.minutos,
+    observacao,
+    saida:"-"
+  };
+
+  const registros = getRegistros();
+  registros.unshift(registro);
+  setRegistros(registros);
+
+  document.getElementById("nome").value = "";
+  document.getElementById("observacao").value = "";
+
+  carregarHistorico();
+  alert("✅ Chegada registrada em tempo real!");
+}
+
+function registrarSaida(){
+  const nome = document.getElementById("nome").value.trim();
+
+  if(!nome){
+    alert("Digite o nome do integrante para registrar a saída.");
+    return;
+  }
+
+  const registros = getRegistros();
+  const registro = registros.find(r => r.nome.toLowerCase() === nome.toLowerCase() && r.saida === "-");
+
+  if(!registro){
+    alert("Não encontrei chegada aberta para esse nome.");
+    return;
+  }
+
+  registro.saida = agoraCompleto().hora;
+  setRegistros(registros);
+  carregarHistorico();
+
+  document.getElementById("nome").value = "";
+  alert("🚪 Saída registrada!");
+}
+
+function carregarHistorico(){
+  const registros = getRegistros();
+  const historico = document.getElementById("historico");
+
+  if(registros.length === 0){
+    historico.innerHTML = "<p>Nenhum registro salvo ainda.</p>";
+    atualizarResumo([]);
+    return;
+  }
+
+  historico.innerHTML = registros.map(r => `
+    <div class="registro">
+      <h3>📌 Registro de ${r.tipo === "chegada" ? "Chegada" : "Saída"}</h3>
+      <p><strong>Nome:</strong> ${r.nome}</p>
+      <p><strong>Função:</strong> ${r.funcao}</p>
+      <p><strong>Data:</strong> ${formatarDataBR(r.data)}</p>
+      <p><strong>Horário registrado:</strong> ${r.hora}</p>
+      <p><strong>Horário oficial:</strong> ${r.horaOficial}</p>
+      <p><strong>Status:</strong> <span class="${r.classe}">${r.status}</span></p>
+      <p><strong>Minutos de atraso:</strong> ${r.minutosAtraso}</p>
+      <p><strong>Saída:</strong> ${r.saida}</p>
+      <p><strong>Observação:</strong> ${r.observacao}</p>
+    </div>
+  `).join("");
+
+  atualizarResumo(registros);
+}
+
+function atualizarResumo(registros){
+  const hoje = agoraCompleto().data;
+  const registrosHoje = registros.filter(r => r.data === hoje);
+
+  const presentes = registrosHoje.filter(r => r.status === "Presente no horário").length;
+  const atrasados = registrosHoje.filter(r => r.status === "Atrasado").length;
+
+  document.getElementById("totalPresentes").textContent = presentes;
+  document.getElementById("totalAtrasados").textContent = atrasados;
+  document.getElementById("totalRegistros").textContent = registrosHoje.length;
+}
+
+function formatarDataBR(dataISO){
+  if(!dataISO || dataISO === "-") return "-";
+  const [ano,mes,dia] = dataISO.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
+function limparHistorico(){
+  if(confirm("Deseja apagar todo o histórico de chegadas?")){
+    localStorage.removeItem("historicoChegadaTempoReal");
+    carregarHistorico();
+  }
+}
+
+window.onload = carregarHistorico;
+</script>
+<hr>
+<a href="index07.html"><h3>Próxima Página</h3></a>
+</body>
+</html>
