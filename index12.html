@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Chegada - Horário Travado</title>
+<title>Arrival Control - Locked Time</title>
 
 <style>
 :root{
@@ -185,58 +185,58 @@ button:hover{
 <body>
 
 <header>
-  <h1>⏱ Controle de Chegada</h1>
-  <p>Programa para registrar a chegada da equipe em tempo real. O horário da chegada é capturado automaticamente pelo relógio do sistema e fica salvo sem alteração manual.</p>
+  <h1>⏱ Arrival Control</h1>
+  <p>Program to register team arrivals in real time. The arrival time is automatically captured by the system clock and saved without manual changes.</p>
   <div class="relogio" id="relogio">00:00:00</div>
   <div class="dataAtual" id="dataAtual"></div>
 </header>
 
 <div class="card">
-<h2>📋 Registro de Chegada</h2>
+<h2>📋 Arrival Registration</h2>
 
 <div class="aviso">
-  <strong>Regra do horário:</strong><br>
-  O horário limite é <strong>20:00</strong>. Se a chegada passar das 20:00, o programa registra o horário real conforme o relógio e mostra o status <strong>Chegou Atrasado</strong> com a contagem de minutos de atraso.
+  <strong>Time Rule:</strong><br>
+  The arrival limit time is <strong>20:00</strong>. If arrival happens after 20:00, the program records the real arrival time based on the clock and displays the status <strong>Arrived Late</strong> with the delay minute count.
 </div>
 
-<label>Nome do Integrante</label>
-<input id="nome" placeholder="Digite o nome do integrante">
+<label>Team Member Name</label>
+<input id="nome" placeholder="Enter the team member name">
 
-<label>Função</label>
+<label>Role</label>
 <select id="funcao">
-  <option>Dançarino</option>
-  <option>Assistente de palco</option>
-  <option>Iluminação e som</option>
-  <option>Artista principal</option>
-  <option>Produtor</option>
-  <option>Outro</option>
+  <option>Dancer</option>
+  <option>Stage Assistant</option>
+  <option>Lighting and Sound</option>
+  <option>Main Artist</option>
+  <option>Producer</option>
+  <option>Other</option>
 </select>
 
-<label>Horário limite de chegada</label>
+<label>Arrival Time Limit</label>
 <input id="horaLimite" type="text" value="20:00" readonly>
 
-<label>Horário real registrado</label>
-<input id="horaRegistrada" type="text" value="Será registrado automaticamente pelo relógio" readonly>
+<label>Real Registered Time</label>
+<input id="horaRegistrada" type="text" value="Will be automatically recorded by the clock" readonly>
 
-<label>Observação</label>
-<textarea id="observacao" placeholder="Digite uma observação opcional..."></textarea>
+<label>Observation</label>
+<textarea id="observacao" placeholder="Enter an optional observation..."></textarea>
 
-<button class="btnChegada" onclick="registrarChegada()">✅ Registrar Chegada Agora</button>
-<button onclick="window.print()">📄 Salvar / Imprimir em PDF</button>
-<button class="btnLimpar" onclick="limparHistorico()">🗑 Limpar Histórico</button>
+<button class="btnChegada" onclick="registrarChegada()">✅ Register Arrival Now</button>
+<button onclick="window.print()">📄 Save / Print PDF</button>
+<button class="btnLimpar" onclick="clearHistory()">🗑 Clear History</button>
 </div>
 
 <div class="card">
-<h2>📊 Resumo do Dia</h2>
+<h2>📊 Daily Summary</h2>
 <div class="resumo">
-  <div class="boxResumo">Dentro do Horário<strong id="totalNoHorario">0</strong></div>
-  <div class="boxResumo">Atrasados<strong id="totalAtrasados">0</strong></div>
-  <div class="boxResumo">Total de Registros<strong id="totalRegistros">0</strong></div>
+  <div class="boxResumo">On Time<strong id="totalNoHorario">0</strong></div>
+  <div class="boxResumo">Late<strong id="totalAtrasados">0</strong></div>
+  <div class="boxResumo">Total Records<strong id="totalRegistros">0</strong></div>
 </div>
 </div>
 
 <div class="card">
-<h2>📜 Histórico de Chegadas</h2>
+<h2>📜 Arrival History</h2>
 <div id="historico"></div>
 </div>
 
@@ -258,7 +258,7 @@ function agoraCompleto(){
 function atualizarRelogio(){
   const {agora,horaCompleta} = agoraCompleto();
   document.getElementById("relogio").textContent = horaCompleta;
-  document.getElementById("dataAtual").textContent = agora.toLocaleDateString("pt-BR",{
+  document.getElementById("dataAtual").textContent = agora.toLocaleDateString("en-US",{
     weekday:"long",
     day:"2-digit",
     month:"long",
@@ -280,14 +280,14 @@ function verificarStatus(horaChegada){
 
   if(chegada <= limite){
     return {
-      status:"Chegou dentro do horário",
+      status:"Arrived On Time",
       classe:"ok",
       minutosAtraso:0
     };
   }
 
   return {
-    status:"Chegou Atrasado",
+    status:"Arrived Late",
     classe:"atrasado",
     minutosAtraso:(chegada - limite)
   };
@@ -307,7 +307,7 @@ function registrarChegada(){
   const observacao = document.getElementById("observacao").value.trim() || "-";
 
   if(!nome){
-    alert("Digite o nome do integrante antes de registrar a chegada.");
+    alert("Enter the team member name before registering the arrival.");
     return;
   }
 
@@ -333,43 +333,43 @@ function registrarChegada(){
   registros.unshift(registro);
   setRegistros(registros);
 
-  carregarHistorico();
+  loadHistory();
 
   document.getElementById("nome").value = "";
   document.getElementById("observacao").value = "";
-  document.getElementById("horaRegistrada").value = "Será registrado automaticamente pelo relógio";
+  document.getElementById("horaRegistrada").value = "Will be automatically recorded by the clock";
 
-  alert("✅ Chegada registrada com horário travado conforme o relógio!");
+  alert("✅ Arrival registered with locked time based on the clock!");
 }
 
-function carregarHistorico(){
+function loadHistory(){
   const registros = getRegistros();
   const historico = document.getElementById("historico");
 
   if(registros.length === 0){
-    historico.innerHTML = "<p>Nenhum registro salvo ainda.</p>";
-    atualizarResumo([]);
+    historico.innerHTML = "<p>No saved records yet.</p>";
+    updateSummary([]);
     return;
   }
 
   historico.innerHTML = registros.map(r => `
     <div class="registro">
-      <h3>📌 Registro de Chegada</h3>
-      <p><strong>Nome:</strong> ${r.nome}</p>
-      <p><strong>Função:</strong> ${r.funcao}</p>
-      <p><strong>Data:</strong> ${formatarDataBR(r.data)}</p>
-      <p><strong>Horário limite:</strong> ${r.horaLimite}</p>
-      <p><strong>Horário real da chegada:</strong> ${r.horaRegistrada}</p>
+      <h3>📌 Arrival Record</h3>
+      <p><strong>Name:</strong> ${r.nome}</p>
+      <p><strong>Role:</strong> ${r.funcao}</p>
+      <p><strong>Date:</strong> ${formatDateUS(r.data)}</p>
+      <p><strong>Arrival Limit:</strong> ${r.horaLimite}</p>
+      <p><strong>Real Arrival Time:</strong> ${r.horaRegistrada}</p>
       <p><strong>Status:</strong> <span class="${r.classe}">${r.status}</span></p>
-      <p><strong>Contagem de atraso:</strong> ${r.minutosAtraso > 0 ? '<span class="atrasado">' + r.minutosAtraso + ' minuto(s) de atraso</span>' : '<span class="ok">0 minuto(s) — dentro do horário</span>'}</p>
-      <p><strong>Observação:</strong> ${r.observacao}</p>
+      <p><strong>Delay Count:</strong> ${r.minutosAtraso > 0 ? '<span class="atrasado">' + r.minutosAtraso + ' minute(s) late</span>' : '<span class="ok">0 minute(s) — on time</span>'}</p>
+      <p><strong>Observation:</strong> ${r.observacao}</p>
     </div>
   `).join("");
 
-  atualizarResumo(registros);
+  updateSummary(registros);
 }
 
-function atualizarResumo(registros){
+function updateSummary(records){
   const hoje = agoraCompleto().data;
   const registrosHoje = registros.filter(r => r.data === hoje);
 
@@ -381,22 +381,21 @@ function atualizarResumo(registros){
   document.getElementById("totalRegistros").textContent = registrosHoje.length;
 }
 
-function formatarDataBR(dataISO){
-  if(!dataISO) return "-";
-  const [ano,mes,dia] = dataISO.split("-");
-  return `${dia}/${mes}/${ano}`;
+function formatDateUS(dateISO){
+  if(!dateISO) return "-";
+  const [year,month,day] = dateISO.split("-");
+  return `${month}/${day}/${year}`;
 }
 
-function limparHistorico(){
-  if(confirm("Deseja apagar todo o histórico de chegada?")){
+function clearHistory(){
+  if(confirm("Do you want to delete the entire arrival history?")){
     localStorage.removeItem("controleChegadaHorarioTravado");
-    carregarHistorico();
+    loadHistory();
   }
 }
 
 window.onload = carregarHistorico;
 </script>
-<hr>
-<a href="index10.html"><h2>Próxima Página</h2></a>
+
 </body>
 </html>
